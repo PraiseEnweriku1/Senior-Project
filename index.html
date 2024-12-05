@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Morgan State University Chatbot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #0E286A;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+        }
+        /* Sidebar Menu */
+        .sidebar {
+            width: 250px;
+            background-color: #1E4E79;
+            color: white;
+            padding: 20px;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+        }
+        .sidebar h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+        }
+        .sidebar ul li {
+            padding: 10px;
+            text-align: center;
+            margin: 10px 0;
+            background-color: #0A365D;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .sidebar ul li:hover {
+            background-color: #F47028;
+        }
+        .main-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background-color: #f0f0f0;
+            padding: 20px;
+        }
+        .chat-container {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 90vh;
+        }
+        .chat-box {
+            flex-grow: 1;
+            max-height: 60%;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            padding: 10px;
+        }
+        .message {
+            padding: 8px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        .user-message {
+            background-color: #e1f5fe;
+            text-align: right;
+        }
+        .bot-message {
+            background-color: #f1f8e9;
+            text-align: left;
+        }
+        input[type="text"] {
+            width: calc(100% - 60px);
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .profile-pic {
+            height: 40px;
+            width: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .user-message-container, .bot-message-container {
+            display: flex;
+            align-items: center;
+        }
+        .bot-message-container {
+            flex-direction: row;
+        }
+        .user-message-container {
+            flex-direction: row-reverse;
+        }
+        .message .timestamp {
+            font-size: 0.8em;
+            color: gray;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar Menu -->
+    <div class="sidebar">
+        <h2>Student Hub</h2>
+        <ul>
+            <li onclick="sendMessage('Schedule Creator')">Schedule Creator</li>
+            <li>Upcoming Events</li>
+            <li>Profile</li>
+            <li>Settings</li>
+        </ul>
+    </div>
+
+    <!-- Main Chat Area -->
+    <div class="main-container">
+        <div class="chat-container">
+            <h1>Morgan State University Chatbot</h1>
+            <div class="chat-box" id="chat-box">
+                <!-- Chat messages will be dynamically added here -->
+            </div>
+            <div>
+                <input type="text" id="user-input" placeholder="Type your message...">
+                <button onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const userProfilePic = 'https://wallpapers.com/images/hd/generic-person-icon-profile-ulmsmhnz0kqafcqn-2.jpg';
+        const botProfilePic = 'https://juji.io/assets/img/ui/juji-profile.png';
+
+        function sendMessage(predefinedMessage = '') {
+            const userInput = predefinedMessage || document.getElementById('user-input').value;
+            if (!userInput.trim()) {
+                return;
+            }
+
+            addMessage(userInput, 'user-message', userProfilePic);
+
+            fetch('/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ message: userInput }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    addMessage('Error: ' + data.error, 'bot-message', botProfilePic);
+                } else {
+                    addMessage(data.message, 'bot-message', botProfilePic);
+                }
+                addTimestamp(data.timestamp);
+            })
+            .catch(error => {
+                addMessage('Error: ' + error, 'bot-message', botProfilePic);
+            });
+
+            document.getElementById('user-input').value = '';
+        }
+
+        function addMessage(content, className, profilePic) {
+            const chatBox = document.getElementById('chat-box');
+            const messageContainer = document.createElement('div');
+            messageContainer.className = className + '-container message';
+
+            const img = document.createElement('img');
+            img.src = profilePic;
+            img.className = 'profile-pic';
+
+            const textDiv = document.createElement('div');
+            textDiv.className = className;
+            textDiv.textContent = content;
+
+            messageContainer.appendChild(img);
+            messageContainer.appendChild(textDiv);
+            chatBox.appendChild(messageContainer);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function addTimestamp(timestamp) {
+            const chatBox = document.getElementById('chat-box');
+            const timestampDiv = document.createElement('div');
+            timestampDiv.className = 'timestamp';
+            timestampDiv.textContent = timestamp;
+            chatBox.appendChild(timestampDiv);
+        }
+    </script>
+
+</body>
+</html>
